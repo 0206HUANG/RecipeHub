@@ -18,6 +18,7 @@ import 'view/user/userprofilepage.dart';
 import 'view/recipe/edit_recipe_page.dart';
 import 'view_models/recipe_form_page_vm.dart';
 import 'view_models/theme_view_model.dart';
+import 'view/user/ai.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -164,6 +165,7 @@ class _MainScreenState extends State<MainScreen> {
     const UserHomePage(),
     const SearchPage(),
     MyRecipesPage(),
+    ChatScreen(),
     UserProfilePage(),
   ];
 
@@ -191,6 +193,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'My Recipes',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.smart_toy),
+            label: 'Chat Bot',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
