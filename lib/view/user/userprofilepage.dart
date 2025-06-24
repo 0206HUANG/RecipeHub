@@ -17,19 +17,20 @@ class UserProfilePage extends StatefulWidget {
   State<UserProfilePage> createState() => _UserProfilePageState();
 }
 
-class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProviderStateMixin {
+class _UserProfilePageState extends State<UserProfilePage>
+    with SingleTickerProviderStateMixin {
   final _auth = AuthService();
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
   late TabController _tabController;
-  
+
   TextEditingController _emailController = TextEditingController();
   TextEditingController _weightController = TextEditingController();
   TextEditingController _heightController = TextEditingController();
   TextEditingController _contactController = TextEditingController();
   TextEditingController _fullNameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
-  
+
   String? _gender;
   String? userID;
   File? _profileImage;
@@ -62,7 +63,8 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await _imagePicker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _profileImage = File(pickedFile.path);
@@ -193,10 +195,10 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                 try {
                   // Close the dialog first
                   Navigator.of(context).pop();
-                  
+
                   // Sign out the user
                   await _auth.signout();
-                  
+
                   // Navigate back to login page and clear history
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => LoginPage()),
@@ -207,16 +209,20 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                   // If there's an error, show a snackbar
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Error during logout: $e'),
-                      backgroundColor: Colors.red,
+                      content: Text('Error during logout: $e',
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.onError)),
+                      backgroundColor: Theme.of(context).colorScheme.error,
                     ),
                   );
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: Theme.of(context).colorScheme.error,
               ),
-              child: Text('Logout', style: TextStyle(color: Colors.white)),
+              child: Text('Logout',
+                  style:
+                      TextStyle(color: Theme.of(context).colorScheme.onError)),
             ),
           ],
         );
@@ -231,7 +237,26 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
     final String userEmail = _userData['email'] ?? 'your.email@example.com';
     final String joinedDate = _userData['joined'] ?? '1 January 2024';
     return Scaffold(
-      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        actions: [
+          Consumer<ThemeViewModel>(
+            builder: (context, themeViewModel, _) {
+              return IconButton(
+                icon: Icon(
+                  themeViewModel.themeMode == ThemeMode.system
+                      ? Icons.brightness_auto
+                      : themeViewModel.themeMode == ThemeMode.dark
+                          ? Icons.dark_mode
+                          : Icons.light_mode,
+                ),
+                tooltip: '${themeViewModel.currentThemeText} Theme',
+                onPressed: themeViewModel.toggleTheme,
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -251,24 +276,6 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                           ? Icon(Icons.person, size: 50, color: Colors.white)
                           : null,
                     ),
-                    SizedBox(height: 10),
-                    Consumer<ThemeViewModel>(
-                      builder: (context, themeViewModel, _) {
-                        return ElevatedButton.icon(
-                          onPressed: themeViewModel.toggleTheme,
-                          icon: Icon(
-                            themeViewModel.isDarkMode 
-                                ? Icons.light_mode 
-                                : Icons.dark_mode,
-                          ),
-                          label: Text('${themeViewModel.currentThemeText} Theme'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).primaryColor,
-                            foregroundColor: Colors.white,
-                          ),
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),
@@ -276,7 +283,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
               Text(
                 userName,
                 style: TextStyle(
-                  color: Colors.black,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
@@ -299,16 +306,16 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                   child: ElevatedButton(
                     onPressed: _navigateToEditProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFFF9800),
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 2,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Edit Profile',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Theme.of(context).colorScheme.onSecondary,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -321,12 +328,12 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
               ListView(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
+                padding: EdgeInsets.symmetric(vertical: 0, horizontal: 0),
                 children: [
                   _buildProfileLink(
                     icon: Icons.tune,
                     title: 'Preferences',
-                    color: Color(0xFFFF9800),
+                    color: Theme.of(context).colorScheme.secondary,
                     onTap: () {
                       // TODO: Navigate to Preferences page
                     },
@@ -334,7 +341,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                   _buildProfileLink(
                     icon: Icons.people,
                     title: 'Friends',
-                    color: Color(0xFFFF9800),
+                    color: Theme.of(context).colorScheme.secondary,
                     onTap: () {
                       // TODO: Navigate to Friends page
                     },
@@ -342,7 +349,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                   _buildProfileLink(
                     icon: Icons.settings,
                     title: 'General Setting',
-                    color: Color(0xFFFF9800),
+                    color: Theme.of(context).colorScheme.secondary,
                     onTap: () {
                       // TODO: Navigate to General Setting page
                     },
@@ -350,7 +357,7 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
                   _buildProfileLink(
                     icon: Icons.info_outline,
                     title: 'About iBites',
-                    color: Color(0xFFFF9800),
+                    color: Theme.of(context).colorScheme.secondary,
                     onTap: () {
                       // TODO: Navigate to About iBites page
                     },
@@ -406,10 +413,13 @@ class _UserProfilePageState extends State<UserProfilePage> with SingleTickerProv
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: isLogout ? Color(0xFFE53935) : Colors.black,
+              color: isLogout
+                  ? Color(0xFFE53935)
+                  : Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          trailing: Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 18),
+          trailing:
+              Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 18),
           onTap: onTap,
         ),
       ),

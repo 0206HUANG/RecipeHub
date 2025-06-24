@@ -252,13 +252,13 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
 
     // Debug information
     final currentUser = FirebaseAuth.instance.currentUser;
-    print('🔍 DEBUG INFO:');
-    print('   Current User: ${currentUser?.uid ?? 'null'}');
-    print('   Recipe ID: ${widget.recipe.id}');
-    print('   Recipe Title: ${widget.recipe.title}');
-    print('   Recipe userId: ${widget.recipe.userId}');
-    print('   Recipe coverImage: ${widget.recipe.coverImage}');
-    print('   Is Owner: ${_isRecipeOwner()}');
+    // print('🔍 DEBUG INFO:');
+    // print('   Current User: ${currentUser?.uid ?? 'null'}');
+    // print('   Recipe ID: ${widget.recipe.id}');
+    // print('   Recipe Title: ${widget.recipe.title}');
+    // print('   Recipe userId: ${widget.recipe.userId}');
+    // print('   Recipe coverImage: ${widget.recipe.coverImage}');
+    // print('   Is Owner: ${_isRecipeOwner()}');
 
     if (_showCookingFinish) {
       Future.microtask(() {
@@ -354,7 +354,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
         builder: (context, vm, _) {
           final recipe = vm.recipe;
           return Scaffold(
-            backgroundColor: Colors.grey[100],
             body: Stack(
               children: [
                 CustomScrollView(
@@ -363,16 +362,15 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                       expandedHeight: 300,
                       pinned: true,
                       stretch: true,
-                      backgroundColor: Colors.white,
                       flexibleSpace: FlexibleSpaceBar(
                         background: _buildRecipeImage(recipe.coverImage),
                       ),
                       leading: Padding(
                         padding: const EdgeInsets.only(left: 8.0, top: 8.0),
                         child: CircleAvatar(
-                          backgroundColor: Colors.white,
+                          backgroundColor: Colors.transparent,
                           child: IconButton(
-                            icon: Icon(Icons.arrow_back, color: Colors.black),
+                            icon: Icon(Icons.arrow_back),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
@@ -381,7 +379,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                         Padding(
                           padding: const EdgeInsets.only(right: 16.0, top: 8.0),
                           child: CircleAvatar(
-                            backgroundColor: Colors.white,
+                            backgroundColor: Colors.transparent,
                             child: IconButton(
                               icon: Icon(
                                 vm.isBookmarked
@@ -403,7 +401,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                         padding: const EdgeInsets.only(
                             top: 40, left: 24, right: 24, bottom: 24),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(32),
                             topRight: Radius.circular(32),
@@ -629,9 +627,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                             Row(
                               children: [
                                 CircleAvatar(
-                                  backgroundColor: Colors.grey[300],
-                                  child:
-                                      Icon(Icons.person, color: Colors.white),
+                                  child: Icon(Icons.person),
                                 ),
                                 const SizedBox(width: 12),
                                 Column(
@@ -647,9 +643,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                                           fontWeight: FontWeight.bold),
                                     ),
                                     Text('Recipe Author',
-                                        style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 12)),
+                                        style: TextStyle(fontSize: 12)),
                                   ],
                                 ),
                                 Spacer(),
@@ -658,7 +652,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                                   ElevatedButton(
                                     onPressed: () {},
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.grey[200],
                                       foregroundColor: Colors.black,
                                       shape: RoundedRectangleBorder(
                                           borderRadius:
@@ -673,16 +666,19 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                             // Tab Bar
                             TabBar(
                               controller: vm.tabController,
-                              labelColor: Colors.white,
-                              unselectedLabelColor: Colors.black,
                               indicator: BoxDecoration(
-                                borderRadius:
-                                    BorderRadius.circular(24), // Less rounded
-                                color: const Color.fromARGB(255, 255, 57, 57),
+                                borderRadius: BorderRadius.circular(24),
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                               indicatorPadding:
                                   const EdgeInsets.symmetric(horizontal: 8.0),
                               indicatorSize: TabBarIndicatorSize.tab,
+                              labelColor: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimary, // Active tab text color
+                              unselectedLabelColor: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface, // Inactive tab text
                               tabs: const [
                                 Tab(text: 'Ingredients'),
                                 Tab(text: 'Instructions'),
@@ -864,9 +860,14 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                   ),
                 );
               },
-              backgroundColor: Color.fromARGB(255, 252, 175, 21),
+              backgroundColor: Theme.of(context).colorScheme.primary,
               icon: Icon(Icons.play_arrow),
-              label: Text('Cook Mode'),
+              label: Text(
+                'Cook Mode',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
+              ),
             ),
           );
         },
@@ -891,7 +892,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 return Container(
                   width: double.infinity,
                   height: 300,
-                  color: Colors.grey[200],
                   child: Center(
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
@@ -916,7 +916,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
             right: 16,
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(25),
               ),
               child: _isUploadingImage
@@ -949,7 +948,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           if (imageUrl.isEmpty && !_isUploadingImage)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.3),
                 child: Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -957,13 +955,11 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                       Icon(
                         Icons.touch_app,
                         size: 48,
-                        color: Colors.white.withOpacity(0.9),
                       ),
                       SizedBox(height: 8),
                       Text(
                         'Tap anywhere to upload',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
                         ),
@@ -998,13 +994,11 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           Icon(
             Icons.add_a_photo,
             size: 80,
-            color: Colors.white.withOpacity(0.8),
           ),
           SizedBox(height: 16),
           Text(
             'Add Recipe Image',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
               fontSize: 24,
               fontWeight: FontWeight.w500,
             ),
@@ -1012,7 +1006,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           Text(
             'Tap anywhere to upload a photo',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
               fontSize: 16,
             ),
           ),
@@ -1020,7 +1013,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           Container(
             padding: EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(30),
               border:
                   Border.all(color: Colors.white.withOpacity(0.4), width: 2),
@@ -1031,13 +1023,11 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 Icon(
                   Icons.cloud_upload,
                   size: 24,
-                  color: Colors.white.withOpacity(0.9),
                 ),
                 SizedBox(width: 12),
                 Text(
                   'Upload Image',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1052,19 +1042,19 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.camera_alt,
-                        size: 16, color: Colors.white.withOpacity(0.8)),
+                    Icon(
+                      Icons.camera_alt,
+                      size: 16,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       'Camera',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -1076,19 +1066,16 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.photo_library,
-                        size: 16, color: Colors.white.withOpacity(0.8)),
+                    Icon(Icons.photo_library, size: 16),
                     SizedBox(width: 6),
                     Text(
                       'Gallery',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),

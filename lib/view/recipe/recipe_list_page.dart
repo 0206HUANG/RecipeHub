@@ -23,8 +23,8 @@ class _RecipeListPageState extends State<RecipeListPage> {
 
   Stream<List<Recipe>> _getRecipeStream() {
     // Always use the combined search and filter method to handle all filters together
-    return _recipeService.searchAndFilterRecipes(
-        _searchQuery, _includedIngredients, _excludedIngredients, _selectedCategory);
+    return _recipeService.searchAndFilterRecipes(_searchQuery,
+        _includedIngredients, _excludedIngredients, _selectedCategory);
   }
 
   @override
@@ -33,6 +33,7 @@ class _RecipeListPageState extends State<RecipeListPage> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: const Text('Recipes'),
         actions: [
           IconButton(

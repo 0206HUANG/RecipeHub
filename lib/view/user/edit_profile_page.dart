@@ -23,14 +23,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final _formKey = GlobalKey<FormState>();
   final _imagePicker = ImagePicker();
   final _auth = AuthService();
-  
+
   TextEditingController _emailController = TextEditingController();
   TextEditingController _weightController = TextEditingController();
   TextEditingController _heightController = TextEditingController();
   TextEditingController _contactController = TextEditingController();
   TextEditingController _fullNameController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
-  
+
   String? _gender;
   String? userID;
   File? _profileImage;
@@ -60,7 +60,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _pickImage() async {
-    final pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery);
+    final pickedFile =
+        await _imagePicker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _profileImage = File(pickedFile.path);
@@ -145,12 +146,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget build(BuildContext context) {
     final String? profileImageUrl = widget.userData['profileImageUrl'];
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.black),
-        title: const Text('Edit Profile', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: const Text('Edit Profile',
+            style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -168,15 +167,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         backgroundColor: Colors.orange.withOpacity(0.15),
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundColor: Colors.grey[300],
                           backgroundImage: _profileImage != null
-                            ? FileImage(_profileImage!)
-                            : (profileImageUrl != null && profileImageUrl.isNotEmpty)
-                              ? NetworkImage(profileImageUrl) as ImageProvider
+                              ? FileImage(_profileImage!)
+                              : (profileImageUrl != null &&
+                                      profileImageUrl.isNotEmpty)
+                                  ? NetworkImage(profileImageUrl)
+                                      as ImageProvider
+                                  : null,
+                          child: (_profileImage == null &&
+                                  (profileImageUrl == null ||
+                                      profileImageUrl.isEmpty))
+                              ? Icon(Icons.person,
+                                  size: 50, color: Colors.grey[600])
                               : null,
-                          child: (_profileImage == null && (profileImageUrl == null || profileImageUrl.isEmpty))
-                            ? Icon(Icons.person, size: 50, color: Colors.grey[600])
-                            : null,
                         ),
                       ),
                       Positioned(
@@ -191,7 +194,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               border: Border.all(color: Colors.white, width: 2),
                             ),
                             padding: const EdgeInsets.all(8),
-                            child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                            child: const Icon(Icons.camera_alt,
+                                color: Colors.white, size: 20),
                           ),
                         ),
                       ),
@@ -208,7 +212,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         controller: _fullNameController,
                         label: 'Full Name',
                         icon: Icons.person,
-                        validator: (value) => value == null || value.isEmpty ? 'Full name is required' : null,
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Full name is required'
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       _buildTextField(
@@ -216,8 +222,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         label: 'Email',
                         icon: Icons.email,
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'Email is required';
-                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) return 'Enter a valid email address';
+                          if (value == null || value.trim().isEmpty)
+                            return 'Email is required';
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value))
+                            return 'Enter a valid email address';
                           return null;
                         },
                       ),
@@ -227,7 +235,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         label: 'Phone No',
                         icon: Icons.phone,
                         keyboardType: TextInputType.phone,
-                        validator: (value) => value == null || value.trim().isEmpty ? 'Contact number is required' : null,
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                                ? 'Contact number is required'
+                                : null,
                       ),
                       const SizedBox(height: 16),
                       // Gender Dropdown
@@ -247,7 +258,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         }).toList(),
                         decoration: InputDecoration(
                           labelText: 'Gender',
-                          prefixIcon: Icon(Icons.people, color: Color(0xFFFF9800)),
+                          prefixIcon:
+                              Icon(Icons.people, color: Color(0xFFFF9800)),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(color: Color(0xFFFF9800)),
@@ -258,11 +270,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide(color: Color(0xFFFF9800), width: 2),
+                            borderSide:
+                                BorderSide(color: Color(0xFFFF9800), width: 2),
                           ),
                           filled: true,
                           fillColor: Colors.orange.withOpacity(0.04),
-                          contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 18, horizontal: 16),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -279,8 +293,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         icon: Icons.height,
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'Height is required';
-                          if (double.tryParse(value) == null) return 'Enter a valid number';
+                          if (value == null || value.trim().isEmpty)
+                            return 'Height is required';
+                          if (double.tryParse(value) == null)
+                            return 'Enter a valid number';
                           return null;
                         },
                       ),
@@ -292,8 +308,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         icon: Icons.monitor_weight,
                         keyboardType: TextInputType.number,
                         validator: (value) {
-                          if (value == null || value.trim().isEmpty) return 'Weight is required';
-                          if (double.tryParse(value) == null) return 'Enter a valid number';
+                          if (value == null || value.trim().isEmpty)
+                            return 'Weight is required';
+                          if (double.tryParse(value) == null)
+                            return 'Enter a valid number';
                           return null;
                         },
                       ),
@@ -376,9 +394,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         filled: true,
         fillColor: Colors.orange.withOpacity(0.04),
-        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
       ),
       style: const TextStyle(fontSize: 16),
     );
   }
-} 
+}

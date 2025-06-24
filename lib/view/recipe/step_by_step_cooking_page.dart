@@ -185,22 +185,24 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
       });
     }
     return Scaffold(
-      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         title: Text(
           'Step ${currentStep + 1} of ${widget.recipe.instructions.length}',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             icon: Icon(
               _isListening ? Icons.mic : Icons.mic_none,
-              color: _isListening ? Colors.red : Colors.white,
+              color: _isListening
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface,
             ),
             onPressed: _speechEnabled
                 ? (_isListening ? _stopListening : _startListening)
@@ -221,8 +223,8 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                     ? Chewie(controller: chewieControllers[currentStep]!)
                     : showLoading
                         ? Center(
-                            child:
-                                CircularProgressIndicator(color: Colors.white))
+                            child: CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.onSurface))
                         : Container(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -262,7 +264,6 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                 width: double.infinity,
                 padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular(20),
                     topRight: Radius.circular(20),
@@ -276,7 +277,7 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF870C14),
+                        color: Theme.of(context).colorScheme.secondary,
                       ),
                     ),
                     SizedBox(height: 12),
@@ -287,7 +288,7 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                           style: TextStyle(
                             fontSize: 18,
                             height: 1.5,
-                            color: Colors.black87,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -299,19 +300,29 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                         padding: EdgeInsets.all(12),
                         margin: EdgeInsets.only(top: 12),
                         decoration: BoxDecoration(
-                          color: Colors.blue[50],
+                          color:
+                              Theme.of(context).colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue[200]!),
+                          border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer!),
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.mic, color: Colors.blue[600], size: 20),
+                            Icon(Icons.mic,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSecondaryContainer,
+                                size: 20),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 'Say "OK", "Next", "Back", or "Repeat"',
                                 style: TextStyle(
-                                  color: Colors.blue[700],
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSecondaryContainer,
                                   fontSize: 12,
                                 ),
                               ),
@@ -327,7 +338,6 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
             // Control Buttons
             Container(
               padding: EdgeInsets.all(20),
-              color: Colors.white,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -337,8 +347,8 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                     icon: Icon(Icons.skip_previous),
                     label: Text('Previous'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
-                      foregroundColor: Colors.black87,
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      foregroundColor: Theme.of(context).colorScheme.onError,
                       padding:
                           EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
@@ -350,8 +360,9 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                     icon: Icon(Icons.replay),
                     label: Text('Repeat'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                      foregroundColor:
+                          Theme.of(context).colorScheme.onSecondary,
                       padding:
                           EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
@@ -368,8 +379,8 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                         ? Text('Next')
                         : Text('Finish'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF870C14),
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       padding:
                           EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),

@@ -3,13 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeViewModel extends ChangeNotifier {
   static const String _themeKey = 'theme_mode';
-  
+
   ThemeMode _themeMode = ThemeMode.system;
-  
+
   ThemeMode get themeMode => _themeMode;
-  
+
   bool get isDarkMode => _themeMode == ThemeMode.dark;
-  
+
   String get currentThemeText {
     switch (_themeMode) {
       case ThemeMode.light:
@@ -52,4 +52,4 @@ class ThemeViewModel extends ChangeNotifier {
         break;
     }
   }
-} 
+}

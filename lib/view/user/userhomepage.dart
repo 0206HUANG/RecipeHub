@@ -80,9 +80,9 @@ class _UserHomePageState extends State<UserHomePage> {
       }
 
       // Check if user is banned
-      bool isBanned = userData['isBanned'] == true || 
-                     userData['banned'] == true || 
-                     userData['is_banned'] == true;
+      bool isBanned = userData['isBanned'] == true ||
+          userData['banned'] == true ||
+          userData['is_banned'] == true;
 
       if (isBanned) {
         await _authService.signout();
@@ -96,7 +96,6 @@ class _UserHomePageState extends State<UserHomePage> {
         _hasAccess = true;
         _isVerifying = false;
       });
-
     } catch (e) {
       print('User verification error: $e');
       await _authService.signout();
@@ -118,19 +117,18 @@ class _UserHomePageState extends State<UserHomePage> {
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => BannedAccountPage(reason: reason)),
+        MaterialPageRoute(
+            builder: (context) => BannedAccountPage(reason: reason)),
         (route) => false,
       );
     }
   }
-  
 
   @override
   Widget build(BuildContext context) {
     // Show loading while verifying access
     if (_isVerifying) {
       return Scaffold(
-        backgroundColor: Colors.white,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -153,7 +151,6 @@ class _UserHomePageState extends State<UserHomePage> {
     // Show access denied if verification failed
     if (!_hasAccess) {
       return Scaffold(
-        backgroundColor: Colors.white,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -185,7 +182,7 @@ class _UserHomePageState extends State<UserHomePage> {
     }
 
     _pages[0] = _buildHomeContent();
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text('iBites'),
@@ -210,11 +207,13 @@ class _UserHomePageState extends State<UserHomePage> {
       value: _viewModel,
       child: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: Padding(
+          SliverToBoxAdapter(
+              child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: _buildDailyInspiration(),
           )),
-          SliverToBoxAdapter(child: Padding(
+          SliverToBoxAdapter(
+              child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -224,7 +223,8 @@ class _UserHomePageState extends State<UserHomePage> {
               ],
             ),
           )),
-          SliverToBoxAdapter(child: Padding(
+          SliverToBoxAdapter(
+              child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +234,8 @@ class _UserHomePageState extends State<UserHomePage> {
               ],
             ),
           )),
-          SliverToBoxAdapter(child: Padding(
+          SliverToBoxAdapter(
+              child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +245,8 @@ class _UserHomePageState extends State<UserHomePage> {
               ],
             ),
           )),
-          SliverToBoxAdapter(child: Padding(
+          SliverToBoxAdapter(
+              child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,7 +282,8 @@ class _UserHomePageState extends State<UserHomePage> {
             SizedBox(
               height: 300,
               child: PageView.builder(
-                controller: PageController(initialPage: viewModel.currentInspirationIndex),
+                controller: PageController(
+                    initialPage: viewModel.currentInspirationIndex),
                 itemCount: viewModel.dailyInspiration.length,
                 onPageChanged: (index) {
                   viewModel.setCurrentInspirationIndex(index);
@@ -360,7 +363,6 @@ class _UserHomePageState extends State<UserHomePage> {
                   Text(
                     recipe.title,
                     style: const TextStyle(
-                      color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -369,7 +371,6 @@ class _UserHomePageState extends State<UserHomePage> {
                   Text(
                     recipe.description,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
                       fontSize: 14,
                     ),
                   ),
@@ -508,7 +509,11 @@ class _UserHomePageState extends State<UserHomePage> {
 
   Widget _buildCategories() {
     final categories = [
-      {'name': 'Breakfast', 'icon': Icons.breakfast_dining, 'color': Colors.orange},
+      {
+        'name': 'Breakfast',
+        'icon': Icons.breakfast_dining,
+        'color': Colors.orange
+      },
       {'name': 'Lunch', 'icon': Icons.lunch_dining, 'color': Colors.green},
       {'name': 'Dinner', 'icon': Icons.dinner_dining, 'color': Colors.purple},
       {'name': 'Dessert', 'icon': Icons.cake, 'color': Colors.pink},
@@ -546,7 +551,6 @@ class _UserHomePageState extends State<UserHomePage> {
                   ),
                   child: Icon(
                     category['icon'] as IconData,
-                    color: Colors.white,
                     size: 28,
                   ),
                 ),

@@ -38,6 +38,7 @@ class _MyRecipesPageState extends State<MyRecipesPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: const Text('My Recipes'),
         actions: [
           IconButton(
@@ -62,6 +63,7 @@ class _MyRecipesPageState extends State<MyRecipesPage>
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Theme.of(context).primaryColor,
         onPressed: () {
           if (_tabController.index == 0) {
             _showCreateCookbookDialog(context);
@@ -124,11 +126,12 @@ class _MyRecipesPageState extends State<MyRecipesPage>
                 print('Recipe data for $recipeId: $recipeData');
                 if (recipeData == null) return SizedBox.shrink();
                 final recipe = Recipe.fromFirestore(recipeSnapshot.data!);
-                
+
                 // Debug: Print recipe info to identify problematic data
                 print('📱 Recipe: ${recipe.title}');
                 print('🖼️ Cover Image: "${recipe.coverImage}"');
-                print('🔍 Image URL valid: ${_isValidImageUrl(recipe.coverImage)}');
+                print(
+                    '🔍 Image URL valid: ${_isValidImageUrl(recipe.coverImage)}');
 
                 return Card(
                   margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -175,7 +178,7 @@ class _MyRecipesPageState extends State<MyRecipesPage>
           itemCount: myRecipes.length,
           itemBuilder: (context, i) {
             final recipe = myRecipes[i];
-            
+
             // Debug: Print recipe info to identify problematic data
             print('📱 Created Recipe: ${recipe.title}');
             print('🖼️ Cover Image: "${recipe.coverImage}"');
@@ -268,8 +271,8 @@ class _MyRecipesPageState extends State<MyRecipesPage>
 
   Widget _buildRecipeImage(String? imageUrl) {
     // Check if image URL is valid
-    if (imageUrl == null || 
-        imageUrl.isEmpty || 
+    if (imageUrl == null ||
+        imageUrl.isEmpty ||
         !(Uri.tryParse(imageUrl)?.hasAbsolutePath ?? false)) {
       return Container(
         width: 50,
@@ -359,13 +362,14 @@ class _MyRecipesPageState extends State<MyRecipesPage>
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
         final coverImage = data['coverImage'] as String?;
-        
-        if (coverImage != null && 
-            coverImage.isNotEmpty && 
+
+        if (coverImage != null &&
+            coverImage.isNotEmpty &&
             !_isValidImageUrl(coverImage)) {
-          print('🧹 Cleaning up invalid image URL for recipe: ${data['title']}');
+          print(
+              '🧹 Cleaning up invalid image URL for recipe: ${data['title']}');
           print('   Invalid URL: "$coverImage"');
-          
+
           batch.update(doc.reference, {'coverImage': ''});
           updateCount++;
         }
@@ -374,11 +378,12 @@ class _MyRecipesPageState extends State<MyRecipesPage>
       if (updateCount > 0) {
         await batch.commit();
         print('✅ Cleaned up $updateCount recipes with invalid image URLs');
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Cleaned up $updateCount recipes with invalid images'),
+              content:
+                  Text('Cleaned up $updateCount recipes with invalid images'),
               backgroundColor: Colors.green,
             ),
           );
