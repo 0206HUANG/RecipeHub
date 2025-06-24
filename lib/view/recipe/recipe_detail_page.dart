@@ -30,7 +30,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
   bool _showTimeDetails = false;
   bool _showNutritionDetails = false;
   bool _showCookingFinish = false;
-  
+
   // Image upload related variables
   final ImagePicker _imagePicker = ImagePicker();
   final RecipeService _recipeService = RecipeService();
@@ -61,15 +61,15 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
       print('🔒 No current user logged in');
       return false;
     }
-    
+
     print('👤 Current user ID: ${currentUser.uid}');
     print('📝 Recipe user ID: ${widget.recipe.userId}');
-    
+
     // Check both userId and potential createdBy field for compatibility
     bool isOwner = currentUser.uid == widget.recipe.userId;
-    
+
     print('✅ Is recipe owner: $isOwner');
-    
+
     // TEMPORARY: Allow all logged-in users to upload for testing
     print('🧪 TESTING MODE: Allowing all users to upload');
     return true; // This will be changed back later
@@ -107,7 +107,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       print('Error uploading image: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -150,7 +149,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
               if (widget.recipe.coverImage.isNotEmpty)
                 ListTile(
                   leading: Icon(Icons.delete, color: Colors.red),
-                  title: Text('Remove Image', style: TextStyle(color: Colors.red)),
+                  title:
+                      Text('Remove Image', style: TextStyle(color: Colors.red)),
                   onTap: () {
                     Navigator.of(context).pop();
                     _removeRecipeImage();
@@ -195,7 +195,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       print('Error taking photo: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -231,7 +230,6 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
           backgroundColor: Colors.green,
         ),
       );
-
     } catch (e) {
       print('Error removing image: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -438,140 +436,144 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                             ),
                             const SizedBox(height: 16),
                             // Time, Difficulty, Calories
-                            Row(
-                              children: [
-                                // Servings
-                                Icon(Icons.people,
-                                    size: iconSize, color: iconColor),
-                                const SizedBox(width: 4),
-                                vm.editingServings
-                                    ? SizedBox(
-                                        width: 60,
-                                        child: TextField(
-                                          controller: vm.servingsController,
-                                          keyboardType: TextInputType.number,
-                                          autofocus: true,
-                                          onSubmitted: (value) {
-                                            final newValue =
-                                                int.tryParse(value);
-                                            if (newValue != null &&
-                                                newValue > 0) {
-                                              vm.updateServings(
-                                                  newValue); // Implement this in your ViewModel
-                                            }
-                                            setState(() =>
-                                                vm.editingServings = false);
-                                          },
-                                          decoration: InputDecoration(
-                                            hintText: 'Servings',
-                                            suffixIcon: IconButton(
-                                              icon: Icon(Icons.check,
-                                                  color: Colors.green),
-                                              tooltip: 'Update',
-                                              onPressed: () {
-                                                final newValue = int.tryParse(
-                                                    vm.servingsController.text);
-                                                if (newValue != null &&
-                                                    newValue > 0) {
-                                                  vm.updateServings(newValue);
-                                                }
-                                                setState(() =>
-                                                    vm.editingServings = false);
-                                              },
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  // Servings
+                                  Icon(Icons.people,
+                                      size: iconSize, color: iconColor),
+                                  const SizedBox(width: 4),
+                                  vm.editingServings
+                                      ? SizedBox(
+                                          width: 60,
+                                          child: TextField(
+                                            controller: vm.servingsController,
+                                            keyboardType: TextInputType.number,
+                                            autofocus: true,
+                                            onSubmitted: (value) {
+                                              final newValue =
+                                                  int.tryParse(value);
+                                              if (newValue != null &&
+                                                  newValue > 0) {
+                                                vm.updateServings(
+                                                    newValue); // Implement this in your ViewModel
+                                              }
+                                              setState(() =>
+                                                  vm.editingServings = false);
+                                            },
+                                            decoration: InputDecoration(
+                                              hintText: 'Servings',
+                                              suffixIcon: IconButton(
+                                                icon: Icon(Icons.check,
+                                                    color: Colors.green),
+                                                tooltip: 'Update',
+                                                onPressed: () {
+                                                  final newValue = int.tryParse(
+                                                      vm.servingsController
+                                                          .text);
+                                                  if (newValue != null &&
+                                                      newValue > 0) {
+                                                    vm.updateServings(newValue);
+                                                  }
+                                                  setState(() => vm
+                                                      .editingServings = false);
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : MouseRegion(
+                                          cursor: SystemMouseCursors.click,
+                                          child: GestureDetector(
+                                            onTap: () {
+                                              vm.servingsController.text =
+                                                  recipe.servings.toString();
+                                              setState(() =>
+                                                  vm.editingServings = true);
+                                            },
+                                            child: Text(
+                                              '${recipe.servings > 0 ? recipe.servings : '-'} Servings',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w500,
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      )
-                                    : MouseRegion(
-                                        cursor: SystemMouseCursors.click,
-                                        child: GestureDetector(
-                                          onTap: () {
-                                            vm.servingsController.text =
-                                                recipe.servings.toString();
-                                            setState(() =>
-                                                vm.editingServings = true);
-                                          },
-                                          child: Text(
-                                            '${recipe.servings > 0 ? recipe.servings : '-'} Servings',
+                                  const SizedBox(width: 16),
+
+                                  // Total Time (expandable)
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.click,
+                                    child: GestureDetector(
+                                      onTap: () => setState(() {
+                                        _showTimeDetails = !_showTimeDetails;
+                                        _showNutritionDetails = false;
+                                      }),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.access_time,
+                                              size: iconSize, color: iconColor),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${(recipe.prepTime + recipe.cookTime) > 0 ? (recipe.prepTime + recipe.cookTime) : '-'} Min Total',
                                             style: TextStyle(
                                               fontWeight: FontWeight.w500,
                                             ),
                                           ),
-                                        ),
+                                          Icon(
+                                            _showTimeDetails
+                                                ? Icons.expand_less
+                                                : Icons.expand_more,
+                                            size: 18,
+                                          ),
+                                        ],
                                       ),
-                                const SizedBox(width: 16),
-
-                                // Total Time (expandable)
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: GestureDetector(
-                                    onTap: () => setState(() {
-                                      _showTimeDetails = !_showTimeDetails;
-                                      _showNutritionDetails = false;
-                                    }),
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.access_time,
-                                            size: iconSize, color: iconColor),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${(recipe.prepTime + recipe.cookTime) > 0 ? (recipe.prepTime + recipe.cookTime) : '-'} Min Total',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        Icon(
-                                          _showTimeDetails
-                                              ? Icons.expand_less
-                                              : Icons.expand_more,
-                                          size: 18,
-                                        ),
-                                      ],
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 16),
+                                  const SizedBox(width: 16),
 
-                                // Calories (expandable)
-                                MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: GestureDetector(
-                                    onTap: () => setState(() {
-                                      _showNutritionDetails =
-                                          !_showNutritionDetails;
-                                      _showTimeDetails = false;
-                                    }),
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.local_fire_department,
-                                            size: iconSize, color: iconColor),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          '${recipe.nutritionInfo.calories > 0 ? recipe.nutritionInfo.calories.round() : '-'} Cal',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w500,
+                                  // Calories (expandable)
+                                  MouseRegion(
+                                    cursor: SystemMouseCursors.click,
+                                    child: GestureDetector(
+                                      onTap: () => setState(() {
+                                        _showNutritionDetails =
+                                            !_showNutritionDetails;
+                                        _showTimeDetails = false;
+                                      }),
+                                      child: Row(
+                                        children: [
+                                          Icon(Icons.local_fire_department,
+                                              size: iconSize, color: iconColor),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            '${recipe.nutritionInfo.calories > 0 ? recipe.nutritionInfo.calories.round() : '-'} Cal',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
-                                        ),
-                                        Icon(
-                                          _showNutritionDetails
-                                              ? Icons.expand_less
-                                              : Icons.expand_more,
-                                          size: 18,
-                                        ),
-                                      ],
+                                          Icon(
+                                            _showNutritionDetails
+                                                ? Icons.expand_less
+                                                : Icons.expand_more,
+                                            size: 18,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 16),
+                                  const SizedBox(width: 16),
 
-                                // Categories
-                                Icon(Icons.signal_cellular_alt,
-                                    size: iconSize, color: iconColor),
-                                const SizedBox(width: 4),
-                                Text(recipe.categories.isNotEmpty
-                                    ? recipe.categories.first
-                                    : '-'),
-                              ],
+                                  // Categories
+                                  Icon(Icons.signal_cellular_alt,
+                                      size: iconSize, color: iconColor),
+                                  const SizedBox(width: 4),
+                                  Text(recipe.categories.isNotEmpty
+                                      ? recipe.categories.first
+                                      : '-'),
+                                ],
+                              ),
                             ),
                             // Expanded Time Details
                             if (_showTimeDetails)
@@ -878,7 +880,7 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
       child: Stack(
         children: [
           // Main image or placeholder
-          if (imageUrl.isNotEmpty) 
+          if (imageUrl.isNotEmpty)
             Image.network(
               imageUrl,
               fit: BoxFit.cover,
@@ -905,9 +907,9 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 return _buildPlaceholderImage();
               },
             )
-          else 
+          else
             _buildPlaceholderImage(),
-          
+
           // Upload button overlay
           Positioned(
             bottom: 16,
@@ -925,7 +927,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                         height: 24,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       ),
                     )
@@ -936,11 +939,12 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                         color: Colors.white,
                         size: 24,
                       ),
-                      tooltip: imageUrl.isNotEmpty ? 'Change Image' : 'Add Image',
+                      tooltip:
+                          imageUrl.isNotEmpty ? 'Change Image' : 'Add Image',
                     ),
             ),
           ),
-          
+
           // Upload hint for empty state
           if (imageUrl.isEmpty && !_isUploadingImage)
             Positioned.fill(
@@ -1018,7 +1022,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white.withOpacity(0.4), width: 2),
+              border:
+                  Border.all(color: Colors.white.withOpacity(0.4), width: 2),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1053,7 +1058,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.camera_alt, size: 16, color: Colors.white.withOpacity(0.8)),
+                    Icon(Icons.camera_alt,
+                        size: 16, color: Colors.white.withOpacity(0.8)),
                     SizedBox(width: 6),
                     Text(
                       'Camera',
@@ -1076,7 +1082,8 @@ class _RecipeDetailPageState extends State<RecipeDetailPage>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.photo_library, size: 16, color: Colors.white.withOpacity(0.8)),
+                    Icon(Icons.photo_library,
+                        size: 16, color: Colors.white.withOpacity(0.8)),
                     SizedBox(width: 6),
                     Text(
                       'Gallery',

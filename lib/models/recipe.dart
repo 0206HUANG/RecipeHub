@@ -16,11 +16,13 @@ class Recipe {
   final String description;
   final List<Ingredient> ingredients;
   final List<Instruction> instructions;
-  final NutritionInfo nutritionInfo;
+  NutritionInfo nutritionInfo;
   final String userId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String createdByName;
+  List<String> searchKeywords;
+  bool? isBookmarked;
 
   Recipe({
     required this.id,
@@ -39,6 +41,8 @@ class Recipe {
     required this.createdAt,
     required this.updatedAt,
     required this.createdByName,
+    this.searchKeywords = const [],
+    this.isBookmarked,
   });
 
   // Add the copyWith method to update a recipe fields
@@ -58,6 +62,7 @@ class Recipe {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? createdByName,
+    bool? isBookmarked,
   }) {
     return Recipe(
       id: this.id,
@@ -76,15 +81,16 @@ class Recipe {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       createdByName: createdByName ?? this.createdByName,
+      isBookmarked: isBookmarked ?? this.isBookmarked,
     );
   }
 
   factory Recipe.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    
+
     // Debug: Print the raw data to understand the structure
     print('🔍 Recipe.fromFirestore data: $data');
-    
+
     return Recipe(
       id: doc.id,
       title: data['title'] ?? '',
@@ -95,12 +101,14 @@ class Recipe {
       cookTime: data['cookTime'] ?? 0,
       totalTime: data['totalTime'] ?? 0,
       description: data['description'] ?? '',
-      ingredients: (data['ingredients'] as List<dynamic>?)
-              ?.map((e) => Ingredient.fromMap(e))
-              .toList() ??
+      ingredients: (data['ingredients'] as List?)?.map((e) {
+            if (e is Map<String, dynamic>) return Ingredient.fromMap(e);
+            return Ingredient(name: e.toString(), amount: 0.0, unit: '');
+          }).toList() ??
           [],
-      instructions: (data['instructions'] as List<dynamic>?)
-              ?.map((e) => Instruction.fromMap(e))
+      instructions: (data['instructions'] as List?)
+              ?.whereType<Map<String, dynamic>>()
+              .map((e) => Instruction.fromMap(e))
               .toList() ??
           [],
       nutritionInfo: NutritionInfo.fromMap(data['nutritionInfo'] ?? {}),
@@ -113,6 +121,7 @@ class Recipe {
           ? (data['updatedAt'] as Timestamp).toDate()
           : DateTime.now(),
       createdByName: data['createdByName'] ?? '-',
+      searchKeywords: [],
     );
   }
 
@@ -130,11 +139,51 @@ class Recipe {
       'instructions': instructions.map((e) => e.toMap()).toList(),
       'nutritionInfo': nutritionInfo.toMap(),
       'userId': userId,
-      'createdBy': userId,  // Add createdBy field for compatibility
+      'createdBy': userId, // Add createdBy field for compatibility
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
       'createdByName': createdByName,
-      'createdByEmail': createdByName,  // Add createdByEmail field
+      'createdByEmail': createdByName, // Add createdByEmail field
+      'searchKeywords': _generateSearchKeywords(),
     };
+  }
+
+  List<String> _generateSearchKeywords() {
+    final keywords = <String>[];
+
+    keywords.addAll(title.toLowerCase().split(' '));
+    keywords.addAll(description.toLowerCase().split(' '));
+    keywords.addAll(categories.map((c) => c.toLowerCase()));
+
+    // Ingredient names and units
+    for (var ingredient in ingredients) {
+      keywords.add(ingredient.name.toLowerCase());
+      keywords.add('${ingredient.amount} ${ingredient.unit}'.toLowerCase());
+      keywords.add(ingredient.toQueryString().toLowerCase());
+    }
+
+    // Instructions
+    for (var instruction in instructions) {
+      keywords.addAll(instruction.description.toLowerCase().split(' '));
+    }
+
+    // Nutrition
+    final nutrition = nutritionInfo;
+    keywords.addAll([
+      nutrition.calories.toString(),
+      nutrition.protein_g.toString(),
+      nutrition.carbohydrates_total_g.toString(),
+      nutrition.fat_total_g.toString(),
+      nutrition.fiber_g.toString(),
+      nutrition.sugar_g.toString(),
+      'calories',
+      'protein',
+      'carbs',
+      'fat',
+      'fiber',
+      'sugar'
+    ]);
+
+    return keywords.toSet().toList(); // remove duplicates
   }
 }

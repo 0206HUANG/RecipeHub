@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../view_models/searchpage_view_model.dart';
+import '../recipe/recipe_detail_page.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -9,6 +12,7 @@ class SearchPage extends StatefulWidget {
 
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
+  final SearchViewModel _viewModel = SearchViewModel();
   String _searchQuery = '';
   bool _isSearching = false;
 
@@ -18,92 +22,132 @@ class _SearchPageState extends State<SearchPage> {
     super.dispose();
   }
 
-  void _performSearch(String query) {
+  void _performSearch(String query) async {
     setState(() {
+      _isSearching = true;
       _searchQuery = query;
+    });
+
+    await _viewModel.searchRecipes(query);
+
+    setState(() {
       _isSearching = true;
     });
-    // TODO: Implement actual search functionality
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _viewModel.clearResults();
+    setState(() {
+      _searchQuery = '';
+      _isSearching = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search recipes...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchQuery = '';
-                            _isSearching = false;
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+    return ChangeNotifierProvider(
+      create: (_) => _viewModel,
+      child: Consumer<SearchViewModel>(
+        builder: (context, viewModel, _) {
+          return Scaffold(
+            body: Column(
+              children: [
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search recipes...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: _clearSearch,
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
+                    ),
+                    onSubmitted: (value) {
+                      _performSearch(value);
+                    },
+                    textInputAction: TextInputAction.search,
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.grey[200],
-              ),
-              onSubmitted: _performSearch,
-              textInputAction: TextInputAction.search,
-            ),
-          ),
 
-          // Search Results
-          Expanded(
-            child: _isSearching
-                ? _buildSearchResults()
-                : _buildSearchSuggestions(),
-          ),
-        ],
+                // Search Results
+                Expanded(
+                  child: _isSearching
+                      ? _buildSearchResults()
+                      : _buildSearchSuggestions(),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildSearchResults() {
-    // TODO: Replace with actual search results
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 5, // Placeholder count
-      itemBuilder: (context, index) {
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          child: ListTile(
-            leading: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                'assets/images/fruit_parfait.jpg',
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
+    return Consumer<SearchViewModel>(
+      builder: (context, viewModel, _) {
+        final results = viewModel.results;
+
+        if (results.isEmpty) {
+          return const Center(child: Text('No recipes found.'));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: results.length,
+          itemBuilder: (context, index) {
+            final recipe = results[index];
+            return Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: ListTile(
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    recipe.coverImage,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                title: Text(recipe.title, overflow: TextOverflow.ellipsis),
+                subtitle:
+                    Text(recipe.description, overflow: TextOverflow.ellipsis),
+                trailing: IconButton(
+                  icon: Icon(
+                    recipe.isBookmarked == true
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: recipe.isBookmarked == true
+                        ? Colors.redAccent
+                        : Colors.grey,
+                  ),
+                  onPressed: () {
+                    viewModel.toggleBookmark(recipe);
+                  },
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RecipeDetailPage(recipe: recipe),
+                    ),
+                  );
+                },
               ),
-            ),
-            title: Text('Recipe ${index + 1}'),
-            subtitle: Text('Description for recipe ${index + 1}'),
-            trailing: IconButton(
-              icon: const Icon(Icons.favorite_border),
-              onPressed: () {
-                // TODO: Save recipe
-              },
-            ),
-            onTap: () {
-              // TODO: Navigate to recipe details
-            },
-          ),
+            );
+          },
         );
       },
     );
@@ -125,11 +169,11 @@ class _SearchPageState extends State<SearchPage> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            _buildSuggestionChip('Healthy'),
+            _buildSuggestionChip('Breakfast'),
             _buildSuggestionChip('Vegetarian'),
             _buildSuggestionChip('Quick Meals'),
             _buildSuggestionChip('Low Carb'),
-            _buildSuggestionChip('Breakfast'),
+            _buildSuggestionChip('Lunch'),
             _buildSuggestionChip('Desserts'),
           ],
         ),
@@ -170,4 +214,4 @@ class _SearchPageState extends State<SearchPage> {
       },
     );
   }
-} 
+}

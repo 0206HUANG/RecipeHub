@@ -144,6 +144,10 @@ class RecipeDetailViewModel extends ChangeNotifier {
       ing.amount = (ing.amount * ratio);
     }
 
+    // Update servings
+    recipe.servings = (recipe.servings * ratio).toInt();
+    servingsController.text = recipe.servings.toString();
+
     editingIngredientsIndex = null;
     editingController.clear();
     updateNutritionInfo();
@@ -161,6 +165,7 @@ class RecipeDetailViewModel extends ChangeNotifier {
       nutritionInfo =
           await caloriesNinjaService.fetchNutritionInfo(ingredientsList);
     }
+    recipe.nutritionInfo = nutritionInfo;
 
     notifyListeners();
   }
