@@ -10,6 +10,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../banned_account.dart';
+import '../user/ai.dart';
 
 class UserHomePage extends StatefulWidget {
   const UserHomePage({super.key});
@@ -43,6 +44,7 @@ class _UserHomePageState extends State<UserHomePage> {
     Container(),
     const SearchPage(),
     MyRecipesPage(),
+    ChatScreen(),
     UserProfilePage(),
   ];
 
@@ -121,6 +123,7 @@ class _UserHomePageState extends State<UserHomePage> {
       );
     }
   }
+  
 
   @override
   Widget build(BuildContext context) {

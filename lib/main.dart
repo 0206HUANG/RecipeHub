@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:another_flutter_splash_screen/another_flutter_splash_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'firebase_options.dart';
@@ -17,6 +18,7 @@ import 'view/user/userprofilepage.dart';
 import 'view/recipe/edit_recipe_page.dart';
 import 'view_models/recipe_form_page_vm.dart';
 import 'view_models/theme_view_model.dart';
+import 'view/user/ai.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -109,10 +111,26 @@ class MyApp extends StatelessWidget {
               ),
             ),
             themeMode: themeViewModel.themeMode,
-            home: const AuthWrapper(),
+            home: const SplashScreenWrapper(),
           );
         },
       ),
+    );
+  }
+}
+
+class SplashScreenWrapper extends StatelessWidget {
+  const SplashScreenWrapper({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return FlutterSplashScreen.gif(
+      useImmersiveMode: true,
+      gifPath: 'assets/gif/recipe.gif',
+      gifWidth: 269,
+      gifHeight: 474,
+      nextScreen: const AuthWrapper(),
+      duration: const Duration(milliseconds: 3515),
     );
   }
 }
@@ -147,6 +165,7 @@ class _MainScreenState extends State<MainScreen> {
     const UserHomePage(),
     const SearchPage(),
     MyRecipesPage(),
+    ChatScreen(),
     UserProfilePage(),
   ];
 
@@ -174,6 +193,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.book),
             label: 'My Recipes',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.smart_toy),
+            label: 'Chat Bot',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
