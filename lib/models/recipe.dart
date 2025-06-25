@@ -21,6 +21,7 @@ class Recipe {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String createdByName;
+  final double rating;  
   List<String> searchKeywords;
   bool? isBookmarked;
 
@@ -41,6 +42,7 @@ class Recipe {
     required this.createdAt,
     required this.updatedAt,
     required this.createdByName,
+    this.rating = 0.0,
     this.searchKeywords = const [],
     this.isBookmarked,
   });
@@ -121,6 +123,7 @@ class Recipe {
           ? (data['updatedAt'] as Timestamp).toDate()
           : DateTime.now(),
       createdByName: data['createdByName'] ?? '-',
+      rating: (data['rating'] ?? 0).toDouble(),
       searchKeywords: [],
     );
   }
@@ -145,6 +148,8 @@ class Recipe {
       'createdByName': createdByName,
       'createdByEmail': createdByName, // Add createdByEmail field
       'searchKeywords': _generateSearchKeywords(),
+      'rating': rating,
+      
     };
   }
 

@@ -1,16 +1,19 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../services/auth_service.dart';
-import '../login.dart'; // 导入LoginPage
+import '../login.dart';
+import '../banned_account.dart';
+import '../user/ai.dart';
 import 'userprofilepage.dart';
 import 'searchpage.dart';
 import '../my_recipes/my_recipes_page.dart';
 import '../../view_models/home_view_model.dart';
-import 'package:provider/provider.dart';
-import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../banned_account.dart';
-import '../user/ai.dart';
+import '../../models/recipe.dart';
+import '../recipe/recipe_detail_page.dart';
 
 class UserHomePage extends StatefulWidget {
   const UserHomePage({super.key});
@@ -26,21 +29,7 @@ class _UserHomePageState extends State<UserHomePage> {
   bool _hasAccess = false;
   late HomeViewModel _viewModel;
 
-  @override
-  void initState() {
-    super.initState();
-    _viewModel = HomeViewModel();
-    _viewModel.initialize();
-    _verifyUserAccess();
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   final List<Widget> _pages = [
-    // Home page content will be set in build method
     Container(),
     const SearchPage(),
     MyRecipesPage(),
@@ -48,136 +37,79 @@ class _UserHomePageState extends State<UserHomePage> {
     UserProfilePage(),
   ];
 
-  // Verify user access on page load
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = HomeViewModel()..initialize();
+    _verifyUserAccess();
+  }
+
   Future<void> _verifyUserAccess() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        _redirectToLogin();
-        return;
-      }
+      if (user == null) return _redirectToLogin();
 
-      // Get user data from Firestore
-      final userDoc = await FirebaseFirestore.instance
+      final snapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(user.uid)
           .get();
+      if (!snapshot.exists) return _kickOut();
 
-      if (!userDoc.exists) {
-        await _authService.signout();
-        _redirectToLogin();
-        return;
-      }
+      final data = snapshot.data() as Map<String, dynamic>;
+      final userType = (data['usertype'] ?? '').toString().toLowerCase().trim();
 
-      final userData = userDoc.data() as Map<String, dynamic>;
-      final userType = userData['usertype']?.toString().toLowerCase().trim();
+      if (userType != 'user') return _kickOut();
 
-      // Check if user is regular user
-      if (userType != 'user') {
-        await _authService.signout();
-        _redirectToLogin();
-        return;
-      }
-
-      // Check if user is banned
-      bool isBanned = userData['isBanned'] == true ||
-          userData['banned'] == true ||
-          userData['is_banned'] == true;
-
+      final isBanned = data['isBanned'] == true ||
+          data['banned'] == true ||
+          data['is_banned'] == true;
       if (isBanned) {
-        await _authService.signout();
-        String? banReason = await _authService.getBanReason(user.uid);
-        _redirectToBanned(banReason ?? "Your account has been suspended.");
+        final reason = await _authService.getBanReason(user.uid);
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+              builder: (_) => BannedAccountPage(
+                  reason: reason ?? 'Your account has been suspended.')),
+          (_) => false,
+        );
         return;
       }
 
-      // Access granted
       setState(() {
         _hasAccess = true;
         _isVerifying = false;
       });
     } catch (e) {
-      print('User verification error: $e');
-      await _authService.signout();
-      _redirectToLogin();
+      await _kickOut();
     }
+  }
+
+  Future<void> _kickOut() async {
+    await _authService.signout();
+    _redirectToLogin();
   }
 
   void _redirectToLogin() {
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => LoginPage()),
-        (route) => false,
-      );
-    }
-  }
-
-  void _redirectToBanned(String reason) {
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-            builder: (context) => BannedAccountPage(reason: reason)),
-        (route) => false,
-      );
-    }
+    if (!mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => LoginPage()),
+      (_) => false,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while verifying access
     if (_isVerifying) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(color: Colors.blue),
-              const SizedBox(height: 20),
-              Text(
-                'Verifying access...',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    // Show access denied if verification failed
     if (!_hasAccess) {
-      return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.security, size: 64, color: Colors.red),
-              const SizedBox(height: 20),
-              Text(
-                'Access Denied',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Invalid account access',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _redirectToLogin,
-                child: Text('Return to Login'),
-              ),
-            ],
-          ),
-        ),
+      return const Scaffold(
+        body: Center(child: Text('Access denied')),
       );
     }
 
@@ -185,16 +117,12 @@ class _UserHomePageState extends State<UserHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('iBites'),
+        title: const Text('iBites'),
         backgroundColor: Colors.transparent,
         actions: [
-          // Add logout button to app bar
           IconButton(
-            icon: Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () {
-              _showLogoutConfirmationDialog(context);
-            },
+            icon: const Icon(Icons.logout),
+            onPressed: () => _showLogoutConfirmationDialog(context),
           ),
         ],
       ),
@@ -208,54 +136,63 @@ class _UserHomePageState extends State<UserHomePage> {
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
-              child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: _buildDailyInspiration(),
-          )),
-          SliverToBoxAdapter(
-              child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionTitle('Categories'),
-                _buildCategories(),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _buildDailyInspiration(),
             ),
-          )),
+          ),
+          // categories
           SliverToBoxAdapter(
-              child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionTitle('Latest Recipes', onViewAll: () {}),
-                _buildRecipeList(_viewModel.latestRecipes),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Categories'),
+                  _buildCategories(),
+                ],
+              ),
             ),
-          )),
+          ),
+          // latest
           SliverToBoxAdapter(
-              child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionTitle('Recently Viewed', onViewAll: () {}),
-                _buildRecipeList(_viewModel.recentlyViewed),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Latest Recipes', onViewAll: () {}),
+                  _buildRecipeList(_viewModel.latestRecipes),
+                ],
+              ),
             ),
-          )),
+          ),
+          // recently viewed
           SliverToBoxAdapter(
-              child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionTitle('Most Popular', onViewAll: () {}),
-                _buildRecipeList(_viewModel.popularRecipes),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Recently Viewed', onViewAll: () {}),
+                  _buildRecipeList(_viewModel.recentlyViewed),
+                ],
+              ),
             ),
-          )),
+          ),
+          // popular
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionTitle('Most Popular', onViewAll: () {}),
+                  _buildRecipeList(_viewModel.popularRecipes),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -263,53 +200,42 @@ class _UserHomePageState extends State<UserHomePage> {
 
   Widget _buildDailyInspiration() {
     return Consumer<HomeViewModel>(
-      builder: (context, viewModel, child) {
-        if (viewModel.dailyInspiration.isEmpty) {
+      builder: (_, vm, __) {
+        if (vm.dailyInspiration.isEmpty) {
           return const Center(child: CircularProgressIndicator());
         }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Daily Inspiration',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const Text('Daily Inspiration',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
             SizedBox(
               height: 300,
               child: PageView.builder(
-                controller: PageController(
-                    initialPage: viewModel.currentInspirationIndex),
-                itemCount: viewModel.dailyInspiration.length,
-                onPageChanged: (index) {
-                  viewModel.setCurrentInspirationIndex(index);
-                },
-                itemBuilder: (context, index) {
-                  final recipe = viewModel.dailyInspiration[index];
-                  return _buildInspirationCard(recipe);
-                },
+                controller:
+                    PageController(initialPage: vm.currentInspirationIndex),
+                itemCount: vm.dailyInspiration.length,
+                onPageChanged: vm.setCurrentInspirationIndex,
+                itemBuilder: (_, i) =>
+                    _buildInspirationCard(vm.dailyInspiration[i]),
               ),
             ),
             const SizedBox(height: 8),
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(
-                  viewModel.dailyInspiration.length,
-                  (index) => Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: viewModel.currentInspirationIndex == index
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey.withOpacity(0.3),
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                vm.dailyInspiration.length,
+                (i) => Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: vm.currentInspirationIndex == i
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey.withOpacity(0.3),
                   ),
                 ),
               ),
@@ -323,15 +249,13 @@ class _UserHomePageState extends State<UserHomePage> {
   Widget _buildInspirationCard(Recipe recipe) {
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Stack(
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Image.asset(
-              recipe.imageUrl,
+              recipe.coverImage,
               height: 300,
               width: double.infinity,
               fit: BoxFit.cover,
@@ -347,33 +271,20 @@ class _UserHomePageState extends State<UserHomePage> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [
-                    Colors.black.withOpacity(0.8),
-                    Colors.transparent,
-                  ],
+                  colors: [Colors.black.withOpacity(0.8), Colors.transparent],
                 ),
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(16),
-                  bottomRight: Radius.circular(16),
-                ),
+                borderRadius:
+                    const BorderRadius.vertical(bottom: Radius.circular(16)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    recipe.title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text(recipe.title,
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
-                  Text(
-                    recipe.description,
-                    style: TextStyle(
-                      fontSize: 14,
-                    ),
-                  ),
+                  Text(recipe.description,
+                      style: const TextStyle(fontSize: 14)),
                 ],
               ),
             ),
@@ -385,44 +296,32 @@ class _UserHomePageState extends State<UserHomePage> {
 
   Widget _buildSectionTitle(String title, {VoidCallback? onViewAll}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
+            child: Text(title,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis),
           ),
           if (onViewAll != null)
             TextButton(
               onPressed: onViewAll,
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  minimumSize: Size.zero),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    'View All',
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  Text('View All',
+                      style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 14,
-                    color: Theme.of(context).primaryColor,
-                  ),
+                  Icon(Icons.arrow_forward_ios,
+                      size: 14, color: Theme.of(context).primaryColor),
                 ],
               ),
             ),
@@ -437,68 +336,73 @@ class _UserHomePageState extends State<UserHomePage> {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: recipes.length,
-        itemBuilder: (context, index) {
-          final recipe = recipes[index];
-          return Container(
-            width: 160,
-            margin: const EdgeInsets.only(right: 16),
-            child: Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
-                    ),
-                    child: Image.asset(
-                      recipe.imageUrl,
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            recipe.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.star,
-                                size: 16,
-                                color: Colors.amber[700],
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                recipe.rating.toString(),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
+        itemBuilder: (_, i) {
+          final r = recipes[i];
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => RecipeDetailPage(recipe: r),
+                ),
+              );
+            },
+            child: Container(
+              width: 160,
+              margin: const EdgeInsets.only(right: 16),
+              child: Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(12),
+                      ),
+                      child: Image.network(
+                        r.coverImage,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
                       ),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              r.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(Icons.star,
+                                    size: 16, color: Colors.amber[700]),
+                                const SizedBox(width: 4),
+                                Text(
+                                  r.rating.toStringAsFixed(1),
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -524,7 +428,7 @@ class _UserHomePageState extends State<UserHomePage> {
     ];
 
     return SizedBox(
-      height: 180, // Fixed height for the grid
+      height: 180,
       child: GridView.builder(
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -534,11 +438,11 @@ class _UserHomePageState extends State<UserHomePage> {
           mainAxisSpacing: 16,
         ),
         itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
+        itemBuilder: (_, i) {
+          final c = categories[i];
           return InkWell(
             onTap: () {
-              // TODO: Navigate to category recipes
+              // TODO: navigate to category
             },
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -546,25 +450,15 @@ class _UserHomePageState extends State<UserHomePage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: category['color'] as Color,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    category['icon'] as IconData,
-                    size: 28,
-                  ),
+                      color: c['color'] as Color,
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Icon(c['icon'] as IconData, size: 28),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  category['name'] as String,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                Text(c['name'] as String,
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.w500),
+                    overflow: TextOverflow.ellipsis),
               ],
             ),
           );
@@ -573,49 +467,28 @@ class _UserHomePageState extends State<UserHomePage> {
     );
   }
 
-  // Show logout confirmation dialog
   void _showLogoutConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Logout'),
-          content: Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
-              },
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  await _authService.signout(); // Sign out the user
-
-                  // Close the dialog
-                  Navigator.of(context).pop();
-
-                  // Navigate back to login page and clear history
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => LoginPage()),
-                    (route) => false,
-                  );
-                } catch (e) {
-                  print("Error during logout: $e");
-                  Navigator.of(context).pop(); // Close dialog on error
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error during logout')));
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-              ),
-              child: Text('Logout'),
-            ),
-          ],
-        );
-      },
+      builder: (_) => AlertDialog(
+        title: const Text('Confirm Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              await _authService.signout();
+              if (!mounted) return;
+              Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => LoginPage()), (_) => false);
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
     );
   }
 }
