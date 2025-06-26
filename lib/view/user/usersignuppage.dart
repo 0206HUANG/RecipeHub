@@ -1,4 +1,4 @@
-import 'dart:js_interop';
+import '../../conditional_import.dart';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

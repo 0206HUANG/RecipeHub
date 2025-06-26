@@ -254,7 +254,7 @@ class _UserHomePageState extends State<UserHomePage> {
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: Image.asset(
+            child: Image.network(
               recipe.coverImage,
               height: 300,
               width: double.infinity,
@@ -271,7 +271,10 @@ class _UserHomePageState extends State<UserHomePage> {
                 gradient: LinearGradient(
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
-                  colors: [Colors.black.withOpacity(0.8), Colors.transparent],
+                  colors: [
+                    Theme.of(context).colorScheme.surface,
+                    Colors.transparent
+                  ],
                 ),
                 borderRadius:
                     const BorderRadius.vertical(bottom: Radius.circular(16)),
@@ -280,11 +283,15 @@ class _UserHomePageState extends State<UserHomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(recipe.title,
-                      style: const TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(recipe.description,
-                      style: const TextStyle(fontSize: 14)),
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 14)),
                 ],
               ),
             ),

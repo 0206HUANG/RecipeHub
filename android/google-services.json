@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "206627570023",
+    "project_id": "ibites-69340",
+    "storage_bucket": "ibites-69340.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:206627570023:android:368961b5ba1ba3b8912fc2",
+        "android_client_info": {
+          "package_name": "com.example.ibites"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDAudC-u2RI7EV1oWr8r7wDkJw7RQ8F_Bk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

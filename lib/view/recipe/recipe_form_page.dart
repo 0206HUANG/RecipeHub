@@ -12,7 +12,6 @@ import '../../services/auth_service.dart';
 import '../../models/recipe.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:http/http.dart' as http;
-import 'dart:html' as html; // Required for web video preview
 import '../../view_models/recipe_form_page_vm.dart';
 import 'recipe_preview.dart';
 import '../../view_models/recipe_preview.dart'; // Import the RecipePreviewPage widget
@@ -409,7 +408,8 @@ class _RecipeFormPageBodyState extends State<_RecipeFormPageBody> {
               ),
               IconButton(
                   icon: Icon(Icons.save),
-                  onPressed: viewModel.isLoading ? null : () => _saveRecipe(context),
+                  onPressed:
+                      viewModel.isLoading ? null : () => _saveRecipe(context),
                   tooltip: "Save"),
             ],
           ),

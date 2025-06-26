@@ -65,7 +65,7 @@ class HomeViewModel extends ChangeNotifier {
   Future<void> _loadRecentlyViewed() async {
     // Replace this logic later with locally stored IDs
     _recentlyViewed = await _fetchRecipes(
-      orderBy: 'createdBy',
+      orderBy: 'createdByEmail',
       descending: true,
       limit: 8,
     );
