@@ -233,7 +233,7 @@ class _UserProfilePageState extends State<UserProfilePage>
   @override
   Widget build(BuildContext context) {
     final String? profileImageUrl = _userData['profileImageUrl'];
-    final String userName = _userData['name'] ?? 'Your Name';
+    final String userName = _userData['name'] ?? _userData['fullname'] ?? 'Your Name';
     final String userEmail = _userData['email'] ?? 'your.email@example.com';
     final String joinedDate = _userData['joined'] ?? '1 January 2024';
     return Scaffold(

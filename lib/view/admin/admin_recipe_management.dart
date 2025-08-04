@@ -433,36 +433,32 @@ class _AdminRecipeManagementState extends State<AdminRecipeManagement> {
                         final authorInfo = snapshot.data ?? {};
                         final authorName = authorInfo['fullname'] ?? 'Loading...';
                         final authorEmail = authorInfo['email'] ?? '';
-                        return Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 12,
-                              backgroundColor: Colors.blue.shade100,
-                              child: Icon(Icons.person, size: 16, color: Colors.blue.shade700),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              authorName,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                        return Expanded(
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 12,
+                                backgroundColor: Colors.blue.shade100,
+                                child: Icon(Icons.person, size: 16, color: Colors.blue.shade700),
                               ),
-                            ),
-                            if (authorEmail.isNotEmpty) ...[
-                              const SizedBox(width: 4),
-                              Text(
-                                '($authorEmail)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  authorEmail.isNotEmpty ? '$authorName ($authorEmail)' : authorName,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: false,
                                 ),
                               ),
                             ],
-                          ],
+                          ),
                         );
                       },
                     ),
-                    const Spacer(),
                     Text(
                       _formatDateTime(recipe.createdAt),
                       style: TextStyle(

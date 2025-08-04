@@ -272,53 +272,59 @@ class RecipeService {
   Stream<List<RecipeModel>> getAllRecipes() {
     return _firestore
         .collection(_collection)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-              final data = doc.data();
-              try {
-                // Try to detect if this is a Recipe object (new format) or RecipeModel (old format)
-                if (data.containsKey('ingredients') &&
-                    data['ingredients'] is List) {
-                  final ingredients = data['ingredients'] as List;
-                  if (ingredients.isNotEmpty && ingredients.first is Map) {
-                    final firstIngredient =
-                        ingredients.first as Map<String, dynamic>;
-                    // Check if it has Recipe model structure (name, amount, unit)
-                    if (firstIngredient.containsKey('name') &&
-                        firstIngredient.containsKey('amount')) {
-                      // This is likely a Recipe object, convert it to RecipeModel
-                      return _convertRecipeToRecipeModel(data, doc.id);
-                    }
-                  }
-                }
+        .map((snapshot) {
+          final list = snapshot.docs.map((doc) {
+               final data = doc.data();
+               try {
+                 // Simplified approach - create RecipeModel manually
+                 return RecipeModel(
+                   id: doc.id,
+                   title: data['title']?.toString() ?? 'Untitled Recipe',
+                   description: data['description']?.toString() ?? '',
+                   ingredients: _parseIngredients(data['ingredients']),
+                   instructions: _parseInstructions(data['instructions']),
+                   prepTime: _parseInt(data['prepTime']),
+                   cookTime: _parseInt(data['cookTime']),
+                   servings: _parseInt(data['servings']) > 0 ? _parseInt(data['servings']) : 1,
+                   categories: _parseStringList(data['categories']),
+                   imageUrl: data['coverImage']?.toString() ?? data['imageUrl']?.toString() ?? '',
+                   createdAt: _parseDateTime(data['createdAt']) ?? DateTime.now(),
+                   authorId: data['userId']?.toString() ?? data['createdBy']?.toString() ?? '',
+                   authorName: data['createdByName']?.toString() ?? 
+                              data['createdByEmail']?.toString() ?? 
+                              data['authorName']?.toString() ?? 'Unknown',
+                   rating: _parseDouble(data['rating']),
+                   updatedAt: _parseDateTime(data['updatedAt']),
+                 );
+               } catch (e) {
+                 print('Error parsing recipe ${doc.id}: $e');
+                 return RecipeModel(
+                   id: doc.id,
+                   title: data['title'] ?? 'Unknown Recipe',
+                   description: data['description'] ?? '',
+                   ingredients: [],
+                   instructions: [],
+                   prepTime: 0,
+                   cookTime: 0,
+                   servings: 1,
+                   categories: [],
+                   imageUrl: data['coverImage'] ?? '',
+                   createdAt: DateTime.now(),
+                   authorId: data['userId'] ?? data['createdBy'] ?? '',
+                   authorName: data['createdByName'] ??
+                       data['createdByEmail'] ??
+                       'Unknown',
+                   rating: 0,
+                   updatedAt: DateTime.now(),
+                 );
+               }
+            }).toList();
 
-                // Default to RecipeModel.fromMap for old format
-                return RecipeModel.fromMap(data, doc.id);
-              } catch (e) {
-                print('Error parsing recipe ${doc.id}: $e');
-                // Return a default RecipeModel with minimal data
-                return RecipeModel(
-                  id: doc.id,
-                  title: data['title'] ?? 'Unknown Recipe',
-                  description: data['description'] ?? '',
-                  ingredients: [],
-                  instructions: [],
-                  prepTime: 0,
-                  cookTime: 0,
-                  servings: 1,
-                  categories: [],
-                  imageUrl: data['coverImage'] ?? '',
-                  createdAt: DateTime.now(),
-                  authorId: data['userId'] ?? data['createdBy'] ?? '',
-                  authorName: data['createdByName'] ??
-                      data['createdByEmail'] ??
-                      'Unknown',
-                  rating: 0,
-                  updatedAt: DateTime.now(),
-                );
-              }
-            }).toList());
+          // Sort in memory by createdAt if available
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return list;
+        });
   }
 
   // Helper method to convert Recipe format to RecipeModel format
@@ -457,41 +463,32 @@ class RecipeService {
 
   // Filter recipes by ingredients
   Stream<List<Recipe>> filterRecipesByIngredients(
-      List<String> includedIngredients, List<String> excludedIngredients) {
+      List<String> ingredients) {
+    if (ingredients.isEmpty) {
+      return getRecipes();
+    }
+
     return _firestore
         .collection(_collection)
-        .orderBy('createdAt', descending: true)
+        .where('ingredients', arrayContainsAny: ingredients)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Recipe.fromFirestore(doc))
-          .where((recipe) {
-        // Convert recipe ingredients to lowercase for case-insensitive comparison
-        final recipeIngredients =
-            recipe.ingredients.map((ing) => ing.name.toLowerCase().trim()).toList();
+      return snapshot.docs.map((doc) => Recipe.fromFirestore(doc)).toList();
+    });
+  }
 
-        // Check if all included ingredients are present
-        final hasAllIncluded = includedIngredients.isEmpty ||
-            includedIngredients.every((ingredient) {
-              final searchTerm = ingredient.toLowerCase().trim();
-              return recipeIngredients.any((ri) => 
-                  ri.contains(searchTerm) || 
-                  searchTerm.split(' ').every((word) => ri.contains(word))
-              );
-            });
+  // Get recipes by tags
+  Stream<List<Recipe>> getRecipesByTags(List<String> tags) {
+    if (tags.isEmpty) {
+      return getRecipes();
+    }
 
-        // Check if none of the excluded ingredients are present
-        final hasNoExcluded = excludedIngredients.isEmpty ||
-            !excludedIngredients.any((ingredient) {
-              final searchTerm = ingredient.toLowerCase().trim();
-              return recipeIngredients.any((ri) => 
-                  ri.contains(searchTerm) || 
-                  searchTerm.split(' ').every((word) => ri.contains(word))
-              );
-            });
-
-        return hasAllIncluded && hasNoExcluded;
-      }).toList();
+    return _firestore
+        .collection(_collection)
+        .where('tags', arrayContainsAny: tags)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => Recipe.fromFirestore(doc)).toList();
     });
   }
 
@@ -619,4 +616,96 @@ class RecipeService {
       throw Exception('Failed to update recipe image: $e');
     }
   }
+
+  // Helper methods for parsing Firestore data safely
+  List<String> _parseIngredients(dynamic data) {
+    try {
+      if (data == null) return [];
+      if (data is List) {
+        return data.map((e) {
+          if (e is Map<String, dynamic>) {
+            // Handle Recipe format: {name, amount, unit}
+            final name = e['name']?.toString() ?? '';
+            final amount = e['amount']?.toString() ?? '';
+            final unit = e['unit']?.toString() ?? '';
+            return '$amount $unit $name'.trim();
+          }
+          return e.toString();
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error parsing ingredients: $e');
+      return [];
+    }
+  }
+  
+  List<String> _parseInstructions(dynamic data) {
+    try {
+      if (data == null) return [];
+      if (data is List) {
+        return data.map((e) {
+          if (e is Map<String, dynamic>) {
+            // Handle Recipe format: {stepNumber, description}
+            final stepNumber = e['stepNumber']?.toString() ?? '';
+            final description = e['description']?.toString() ?? '';
+            return stepNumber.isNotEmpty ? '$stepNumber. $description' : description;
+          }
+          return e.toString();
+        }).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error parsing instructions: $e');
+      return [];
+    }
+  }
+  
+  List<String> _parseStringList(dynamic data) {
+    try {
+      if (data == null) return [];
+      if (data is List) {
+        return data.map((e) => e.toString()).toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error parsing string list: $e');
+      return [];
+    }
+  }
+  
+  int _parseInt(dynamic data) {
+    try {
+      if (data == null) return 0;
+      if (data is int) return data;
+      if (data is double) return data.toInt();
+      if (data is String) return int.tryParse(data) ?? 0;
+      return 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  
+  double _parseDouble(dynamic data) {
+    try {
+      if (data == null) return 0.0;
+      if (data is double) return data;
+      if (data is int) return data.toDouble();
+      if (data is String) return double.tryParse(data) ?? 0.0;
+      return 0.0;
+    } catch (e) {
+      return 0.0;
+    }
+  }
+  
+   DateTime _parseDateTime(dynamic data) {
+   try {
+     if (data == null) return DateTime.now();
+     if (data is Timestamp) return data.toDate();
+     if (data is String) return DateTime.tryParse(data) ?? DateTime.now();
+     return DateTime.now();
+   } catch (e) {
+     return DateTime.now();
+   }
+ }
 }

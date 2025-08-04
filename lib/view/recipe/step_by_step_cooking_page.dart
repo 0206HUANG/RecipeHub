@@ -89,54 +89,71 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
       _lastWords = words;
     });
 
+    // Enhanced debugging
+    print('Full speech result: "$words"');
+    print('Is processing command: $_isProcessingCommand');
+    print('Result confidence: ${result.confidence ?? 'unknown'}');
+
     // Prevent multiple triggers
     if (_isProcessingCommand) return;
 
-    // Get last 1–2 words only for matching
-    final lastWords =
-        words.split(' ').reversed.take(2).toList().reversed.join(' ');
-    print('Last spoken: $lastWords');
+    // More flexible word matching - check entire sentence
+    print('Checking for voice commands in: "$words"');
 
-    if (lastWords.contains('back') || lastWords.contains('previous')) {
+    if (words.contains('back') || words.contains('previous')) {
+      print('Detected: BACK command');
       _handleVoiceCommand(_previousStep);
-    } else if (lastWords.contains('repeat') || lastWords.contains('again')) {
+    } else if (words.contains('repeat') || words.contains('again')) {
+      print('Detected: REPEAT command');
       _handleVoiceCommand(_repeatStep);
-    } else if (lastWords.contains('next') ||
-        lastWords.contains('ok') ||
-        lastWords.contains('continue')) {
+    } else if (words.contains('next') ||
+        words.contains('ok') || words.contains('okay') ||
+        words.contains('continue') || words.contains('go')) {
+      print('Detected: NEXT command');
       _handleVoiceCommand(_nextStep);
+    } else {
+      print('No command detected in: "$words"');
     }
   }
 
   void _handleVoiceCommand(Function command) {
+    print('Executing voice command...');
     _isProcessingCommand = true;
     command();
 
-    // Allow another command after 1.5 seconds
-    Future.delayed(Duration(seconds: 2), () {
+    // Allow another command after 1 second (reduced delay)
+    Future.delayed(Duration(milliseconds: 1000), () {
       _isProcessingCommand = false;
+      print('Ready for next voice command');
     });
   }
 
   void _nextStep() {
+    print('Moving to next step');
     if (currentStep < widget.recipe.instructions.length - 1) {
       setState(() {
         currentStep++;
       });
       _playCurrentStepVideo();
+    } else {
+      print('Already at last step');
     }
   }
 
   void _previousStep() {
+    print('Moving to previous step');
     if (currentStep > 0) {
       setState(() {
         currentStep--;
       });
       _playCurrentStepVideo();
+    } else {
+      print('Already at first step');
     }
   }
 
   void _repeatStep() {
+    print('Repeating current step');
     _playCurrentStepVideo();
   }
 
@@ -308,25 +325,58 @@ class _StepByStepCookingPageState extends State<StepByStepCookingPage> {
                                   .colorScheme
                                   .onSecondaryContainer!),
                         ),
-                        child: Row(
+                        child: Column(
                           children: [
-                            Icon(Icons.mic,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSecondaryContainer,
-                                size: 20),
-                            SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Say "OK", "Next", "Back", or "Repeat"',
-                                style: TextStyle(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSecondaryContainer,
-                                  fontSize: 12,
+                            Row(
+                              children: [
+                                Icon(Icons.mic,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSecondaryContainer,
+                                    size: 20),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _isListening 
+                                      ? 'Listening... Say "OK", "Next", "Back", or "Repeat"'
+                                      : 'Tap mic to enable voice: "OK", "Next", "Back", "Repeat"',
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSecondaryContainer,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                if (_isListening)
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            if (_lastWords.isNotEmpty)
+                              Container(
+                                margin: EdgeInsets.only(top: 8),
+                                padding: EdgeInsets.all(8),
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Heard: "$_lastWords"',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                    fontSize: 10,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 ),
                               ),
-                            ),
                           ],
                         ),
                       ),

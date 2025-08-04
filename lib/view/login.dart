@@ -17,6 +17,7 @@ class LoginPage extends StatelessWidget {
       create: (_) => LoginViewModel(),
       child: Scaffold(
         backgroundColor: Color.fromRGBO(209, 224, 166, 1),
+        resizeToAvoidBottomInset: true,
         body: Consumer<LoginViewModel>(
           // Listening for ViewModel changes
           builder: (context, viewModel, child) {
@@ -33,12 +34,13 @@ class LoginPage extends StatelessWidget {
                 ),
                 Container(color: Color.fromARGB(6, 116, 116, 116)),
                 Center(
-                  child: Padding(
+                  child: SingleChildScrollView(
                     padding: const EdgeInsets.only(
                         left: 30.0, right: 30.0, top: 60.0, bottom: 80),
                     child: Form(
+                      autovalidateMode: AutovalidateMode.disabled,
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
